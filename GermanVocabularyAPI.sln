@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GermanVocabularyAPI", "GermanVocabularyAPI.csproj", "{AAFA99E0-6EAF-435B-8101-446D4E64A170}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AAFA99E0-6EAF-435B-8101-446D4E64A170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAFA99E0-6EAF-435B-8101-446D4E64A170}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAFA99E0-6EAF-435B-8101-446D4E64A170}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAFA99E0-6EAF-435B-8101-446D4E64A170}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C76B68F0-956B-4915-9EDE-AD0E66C898E0}
+	EndGlobalSection
+EndGlobal
