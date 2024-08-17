@@ -1,4 +1,5 @@
 using GermanVocabularyAPI.Models;
+using GermanVocabularyAPI.Models.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace GermanVocabularyAPI.Data
@@ -9,36 +10,32 @@ namespace GermanVocabularyAPI.Data
         {
         }
 
+        public DbSet<CardBase> CardBases {get; set;}
         public DbSet<Deck> Decks { get; set; }
         public DbSet<Noun> Nouns { get; set; }
         public DbSet<Verb> Verbs { get; set; }
         public DbSet<OtherNoun> OtherNouns { get; set; }
-        public DbSet<User> Users { get; set; }
-
         public DbSet<Adjective> Adjectives { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Noun>()
-                .HasOne(n => n.Card)
-                .WithMany(c => c.Nouns)
-                .HasForeignKey(n => n.CardId);
+            modelBuilder.Entity<CardBase>()
+                        .HasDiscriminator<string>("CardType")
+                        .HasValue<CardBase>("Base")
+                        .HasValue<Noun>("Noun")
+                        .HasValue<Verb>("Verb")
+                        .HasValue<OtherNoun>("OtherNoun")
+                        .HasValue<Adjective>("Adjective");
 
-            modelBuilder.Entity<Verb>()
-                .HasOne(v => v.Card)
-                .WithMany(c => c.Verbs)
-                .HasForeignKey(v => v.CardId);
+            modelBuilder.Entity<Deck>()
+                        .HasKey(d => d.Id);
+            
+            modelBuilder.Entity<Deck>()
+                        .HasMany(d => d.Cards)
+                        .WithOne(c => c.Deck)
+                        .HasForeignKey(c => c.DeckId);
 
-            modelBuilder.Entity<OtherNoun>()
-                .HasOne(o => o.Card)
-                .WithMany(c => c.OtherNouns)
-                .HasForeignKey(o => o.CardId);
-
-            modelBuilder.Entity<Adjective>()
-                .HasOne(a => a.Card)
-                .WithMany(c => c.Adjectives)
-                .HasForeignKey(o => o.CardId);
-
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

@@ -3,6 +3,7 @@ using GermanVocabularyAPI.Data;
 using GermanVocabularyAPI.DTOs;
 using GermanVocabularyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +26,7 @@ public class VerbController : ControllerBase
     public async Task<ActionResult<IEnumerable<VerbDTO>>> GetVerbs()
     {
         var verbs = await _context.Verbs.ToListAsync();
-        return Ok(_mapper.Map<VerbDTO>(verbs));
+        return Ok(_mapper.Map<List<VerbDTO>>(verbs));
     }
 
     [HttpGet("{id}")]
@@ -44,13 +45,15 @@ public class VerbController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Verb>> PostVerb(VerbDTO verbDTO)
     {
+        if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
+        }
+
         var verb = _mapper.Map<Verb>(verbDTO);
         _context.Verbs.Add(verb);
         await _context.SaveChangesAsync();
-
-        verbDTO.Id = verb.Id;
-
-        return CreatedAtAction("GetVerb", new { id = verbDTO.Id }, verbDTO);
+        return CreatedAtAction("GetVerb", new { id = verb.Id }, _mapper.Map<VerbDTO>(verb));
     }
 
     [HttpPut("{id}")]
@@ -59,6 +62,11 @@ public class VerbController : ControllerBase
         if (id != verbDTO.Id)
         {
             return BadRequest();
+        }
+
+        if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
         }
 
         var verb = await _context.Verbs.FindAsync(id);
@@ -76,7 +84,7 @@ public class VerbController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!VerbExists(id))
+            if (!await VerbExistsAsync(id))
             {
                 return NotFound();
             }
@@ -87,6 +95,34 @@ public class VerbController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchVerb(int id, [FromBody] JsonPatchDocument<VerbDTO> patchDoc)
+    {
+        if (patchDoc == null)
+        {
+            return BadRequest();
+        }
+
+        var verb = await _context.Verbs.FindAsync(id);
+        if (verb == null)
+        {
+            return NotFound();
+        }
+
+        var verbDto = _mapper.Map<VerbDTO>(verb);
+        patchDoc.ApplyTo(verbDto, ModelState);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        _mapper.Map(verbDto, verb);
+        await _context.SaveChangesAsync();
+
+        return Ok(_mapper.Map<VerbDTO>(verb));
     }
 
     [HttpDelete("{id}")]
@@ -104,8 +140,8 @@ public class VerbController : ControllerBase
         return NoContent();
     }
 
-    private bool VerbExists(int id)
+    private async Task<bool> VerbExistsAsync(int id)
     {
-        return _context.Verbs.Any(e => e.Id == id);
+        return await _context.Verbs.AnyAsync(e => e.Id == id);
     }
 }

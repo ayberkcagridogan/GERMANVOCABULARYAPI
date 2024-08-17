@@ -3,6 +3,7 @@ using GermanVocabularyAPI.Data;
 using GermanVocabularyAPI.DTOs;
 using GermanVocabularyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,13 +45,15 @@ public class OtherNounController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Verb>> PostOtherNoun(OtherNounDTO otherNounDTO)
     {
+        if (!await _context.Decks.AnyAsync(d => d.Id == otherNounDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
+        }
+
         var otherNoun = _mapper.Map<OtherNoun>(otherNounDTO);
         _context.OtherNouns.Add(otherNoun);
         await _context.SaveChangesAsync();
-
-        otherNounDTO.Id = otherNoun.Id;
-
-        return CreatedAtAction("GetOtherNoun", new { id = otherNounDTO.Id }, otherNounDTO);
+        return CreatedAtAction("GetOtherNoun", new { id = otherNoun.Id }, _mapper.Map<OtherNounDTO>(otherNoun));
     }
 
     [HttpPut("{id}")]
@@ -59,6 +62,11 @@ public class OtherNounController : ControllerBase
         if (id != otherNounDTO.Id)
         {
             return BadRequest();
+        }
+
+        if (!await _context.Decks.AnyAsync(d => d.Id == otherNounDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
         }
 
         var otherNoun = await _context.OtherNouns.FindAsync(id);
@@ -87,6 +95,34 @@ public class OtherNounController : ControllerBase
         }
 
         return NoContent();
+    }
+    
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchOtherNoun(int id, [FromBody] JsonPatchDocument<OtherNounDTO> patchDoc)
+    {
+        if (patchDoc == null)
+        {
+            return BadRequest();
+        }
+
+        var otherNoun = await _context.OtherNouns.FindAsync(id);
+        if (otherNoun == null)
+        {
+            return NotFound();
+        }
+
+        var otherNounDto = _mapper.Map<OtherNounDTO>(otherNoun);
+        patchDoc.ApplyTo(otherNounDto, ModelState);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        _mapper.Map(otherNounDto, otherNoun);
+        await _context.SaveChangesAsync();
+
+        return Ok(_mapper.Map<OtherNounDTO>(otherNoun));
     }
 
     [HttpDelete("{id}")]

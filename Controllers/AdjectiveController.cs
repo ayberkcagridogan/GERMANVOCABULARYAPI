@@ -2,7 +2,7 @@ using AutoMapper;
 using GermanVocabularyAPI.Data;
 using GermanVocabularyAPI.DTOs;
 using GermanVocabularyAPI.Models;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +24,7 @@ public class AdjectiveController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AdjectiveDTO>>> GetAdjectives()
     {
-        var adjectives = await _context.Nouns.ToListAsync();
+        var adjectives = await _context.Adjectives.ToListAsync();
         return Ok(_mapper.Map<List<AdjectiveDTO>>(adjectives));
     }
 
@@ -44,13 +44,44 @@ public class AdjectiveController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AdjectiveDTO>> PostAdjective(AdjectiveDTO adjectiveDTO)
     {
+        if (!await _context.Decks.AnyAsync(d => d.Id == adjectiveDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
+        }
+
         var adjective = _mapper.Map<Adjective>(adjectiveDTO);
         _context.Adjectives.Add(adjective);
         await _context.SaveChangesAsync();
+        
+        return CreatedAtAction("GetAdjective", new { id = adjective.Id }, _mapper.Map<AdjectiveDTO>(adjective));
+    }
 
-        adjectiveDTO.Id = adjective.Id; 
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchAdjective(int id, [FromBody] JsonPatchDocument<AdjectiveDTO> patchDoc)
+    {
+        if (patchDoc == null)
+        {
+            return BadRequest();
+        }
 
-        return CreatedAtAction("GetAdjective", new { id = adjectiveDTO.Id }, adjectiveDTO);
+        var adjective = await _context.Adjectives.FindAsync(id);
+        if (adjective == null)
+        {
+            return NotFound();
+        }
+
+        var adjectiveDto = _mapper.Map<AdjectiveDTO>(adjective);
+        patchDoc.ApplyTo(adjectiveDto, ModelState);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        _mapper.Map(adjectiveDto, adjective);
+        await _context.SaveChangesAsync();
+
+        return Ok(_mapper.Map<AdjectiveDTO>(adjective));
     }
 
     [HttpPut("{id}")]
@@ -59,6 +90,11 @@ public class AdjectiveController : ControllerBase
         if (id != adjectiveDTO.Id)
         {
             return BadRequest();
+        }
+
+        if (!await _context.Decks.AnyAsync(d => d.Id == adjectiveDTO.DeckId))
+        {
+            return NotFound("NotFound Deck");
         }
 
         var adjective = await _context.Adjectives.FindAsync(id);

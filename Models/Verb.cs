@@ -1,20 +1,21 @@
+using System.Text.Json.Serialization;
+using GermanVocabularyAPI.Models.Enums;
+using GermanVocabularyAPI.Models.Interface;
+
 namespace GermanVocabularyAPI.Models
 {
-    public class Verb
+    public class Verb : CardBase
     {
-        public int Id { get; set; }
-        public string GermanVerb { get; set; }
-        public string TurkishMeaning { get; set; }
-        public string Ich { get; set; }
-        public string Du { get; set; }
-        public string EsSieEr { get; set; }
-        public string Wir { get; set; }
-        public string Ihr { get; set; }
-        public string sieSie { get; set; }
-        public DateTime CreateDate { get; set; }
-        public DateTime ModifiedDate { get; set; }
-        public string Note { get; set; }
-        public int CardId { get; set; }
-        public Card Card { get; set; }
+        public string Ich { get; set; } = string.Empty;
+        public string Du { get; set; } = string.Empty;
+        public string EsSieEr { get; set; } = string.Empty;
+        public string Wir { get; set; } = string.Empty;
+        public string Ihr { get; set; } = string.Empty;
+        public string sieSie { get; set; } = string.Empty;
+
+        public Verb()
+        {
+            WordType = WordType.Verb;
+        } 
     }
 }

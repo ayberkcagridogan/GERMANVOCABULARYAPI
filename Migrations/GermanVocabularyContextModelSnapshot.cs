@@ -22,17 +22,13 @@ namespace GermanVocabularyAPI.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GermanVocabularyAPI.Models.Card", b =>
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Deck", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CardName")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp with time zone");
@@ -43,15 +39,16 @@ namespace GermanVocabularyAPI.Migrations
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("SuccessRate")
-                        .HasColumnType("integer");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cards");
+                    b.ToTable("Decks");
                 });
 
-            modelBuilder.Entity("GermanVocabularyAPI.Models.Noun", b =>
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Interface.CardBase", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,15 +56,23 @@ namespace GermanVocabularyAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CardId")
-                        .HasColumnType("integer");
+                    b.Property<string>("CardType")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("GermanNoun")
+                    b.Property<int>("DeckId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GermanWord")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsRemember")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
@@ -75,102 +80,67 @@ namespace GermanVocabularyAPI.Migrations
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("TurkishMeaning")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("WordType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeckId");
+
+                    b.ToTable("CardBases");
+
+                    b.HasDiscriminator<string>("CardType").HasValue("Base");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Adjective", b =>
+                {
+                    b.HasBaseType("GermanVocabularyAPI.Models.Interface.CardBase");
+
+                    b.Property<string>("Komparativ")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Superlativ")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasDiscriminator().HasValue("Adjective");
+                });
+
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Noun", b =>
+                {
+                    b.HasBaseType("GermanVocabularyAPI.Models.Interface.CardBase");
 
                     b.Property<string>("Plural")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("TurkishMeaning")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardId");
-
-                    b.ToTable("Nouns");
+                    b.HasDiscriminator().HasValue("Noun");
                 });
 
             modelBuilder.Entity("GermanVocabularyAPI.Models.OtherNoun", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.HasBaseType("GermanVocabularyAPI.Models.Interface.CardBase");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CardId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Noun")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TurkishMeaning")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardId");
-
-                    b.ToTable("OtherNouns");
-                });
-
-            modelBuilder.Entity("GermanVocabularyAPI.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
+                    b.HasDiscriminator().HasValue("OtherNoun");
                 });
 
             modelBuilder.Entity("GermanVocabularyAPI.Models.Verb", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CardId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.HasBaseType("GermanVocabularyAPI.Models.Interface.CardBase");
 
                     b.Property<string>("Du")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("EsSieEr")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("GermanVerb")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -182,17 +152,6 @@ namespace GermanVocabularyAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TurkishMeaning")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Wir")
                         .IsRequired()
                         .HasColumnType("text");
@@ -201,53 +160,23 @@ namespace GermanVocabularyAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardId");
-
-                    b.ToTable("Verbs");
+                    b.HasDiscriminator().HasValue("Verb");
                 });
 
-            modelBuilder.Entity("GermanVocabularyAPI.Models.Noun", b =>
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Interface.CardBase", b =>
                 {
-                    b.HasOne("GermanVocabularyAPI.Models.Card", "Card")
-                        .WithMany("Nouns")
-                        .HasForeignKey("CardId")
+                    b.HasOne("GermanVocabularyAPI.Models.Deck", "Deck")
+                        .WithMany("Cards")
+                        .HasForeignKey("DeckId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Card");
+                    b.Navigation("Deck");
                 });
 
-            modelBuilder.Entity("GermanVocabularyAPI.Models.OtherNoun", b =>
+            modelBuilder.Entity("GermanVocabularyAPI.Models.Deck", b =>
                 {
-                    b.HasOne("GermanVocabularyAPI.Models.Card", "Card")
-                        .WithMany("OtherNouns")
-                        .HasForeignKey("CardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Card");
-                });
-
-            modelBuilder.Entity("GermanVocabularyAPI.Models.Verb", b =>
-                {
-                    b.HasOne("GermanVocabularyAPI.Models.Card", "Card")
-                        .WithMany("Verbs")
-                        .HasForeignKey("CardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Card");
-                });
-
-            modelBuilder.Entity("GermanVocabularyAPI.Models.Card", b =>
-                {
-                    b.Navigation("Nouns");
-
-                    b.Navigation("OtherNouns");
-
-                    b.Navigation("Verbs");
+                    b.Navigation("Cards");
                 });
 #pragma warning restore 612, 618
         }
