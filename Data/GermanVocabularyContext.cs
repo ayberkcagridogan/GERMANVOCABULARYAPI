@@ -26,6 +26,10 @@ namespace GermanVocabularyAPI.Data
                         .HasValue<Verb>("Verb")
                         .HasValue<OtherNoun>("OtherNoun")
                         .HasValue<Adjective>("Adjective");
+                        
+            modelBuilder.Entity<CardBase>()
+                        .HasIndex(a => a.GermanWord)
+                        .IsUnique();
 
             modelBuilder.Entity<Deck>()
                         .HasKey(d => d.Id);

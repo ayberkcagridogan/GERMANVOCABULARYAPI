@@ -92,6 +92,9 @@ namespace GermanVocabularyAPI.Migrations
 
                     b.HasIndex("DeckId");
 
+                    b.HasIndex("GermanWord")
+                        .IsUnique();
+
                     b.ToTable("CardBases");
 
                     b.HasDiscriminator<string>("CardType").HasValue("Base");

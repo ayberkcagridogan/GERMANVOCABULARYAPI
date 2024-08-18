@@ -1,6 +1,7 @@
 using AutoMapper;
 using GermanVocabularyAPI.Data;
 using GermanVocabularyAPI.DTOs;
+using GermanVocabularyAPI.Exception;
 using GermanVocabularyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
@@ -25,119 +26,145 @@ public class VerbController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VerbDTO>>> GetVerbs()
     {
-        var verbs = await _context.Verbs.ToListAsync();
-        return Ok(_mapper.Map<List<VerbDTO>>(verbs));
+        try
+        {
+            var verbs = await _context.Verbs.ToListAsync();
+            return Ok(_mapper.Map<List<VerbDTO>>(verbs));  
+        }
+        catch (System.Exception ex)
+        {
+            return await ExceptionHandler.HandleExceptionAsync(ex);
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<VerbDTO>> GetVerb(int id)
     {
-        var verb = await _context.Verbs.FindAsync(id);
-
-        if (verb == null)
+        try
         {
-            return NotFound();
-        }
+            var verb = await _context.Verbs.FindAsync(id);
 
-        return Ok(_mapper.Map<VerbDTO>(verb));
+            if (verb == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(_mapper.Map<VerbDTO>(verb)); 
+        }
+        catch (System.Exception ex)
+        {
+            return await ExceptionHandler.HandleExceptionAsync(ex);
+        }
     }
 
     [HttpPost]
     public async Task<ActionResult<Verb>> PostVerb(VerbDTO verbDTO)
     {
-        if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
+        try
         {
-            return NotFound("NotFound Deck");
-        }
+            if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
+            {
+                return NotFound("NotFound Deck");
+            }
 
-        var verb = _mapper.Map<Verb>(verbDTO);
-        _context.Verbs.Add(verb);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction("GetVerb", new { id = verb.Id }, _mapper.Map<VerbDTO>(verb));
+            var verb = _mapper.Map<Verb>(verbDTO);
+            _context.Verbs.Add(verb);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetVerb", new { id = verb.Id }, _mapper.Map<VerbDTO>(verb));
+        }
+        catch (System.Exception ex)
+        {
+            return await ExceptionHandler.HandleExceptionAsync(ex);
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> PutNoun(int id, VerbDTO verbDTO)
     {
-        if (id != verbDTO.Id)
-        {
-            return BadRequest();
-        }
-
-        if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
-        {
-            return NotFound("NotFound Deck");
-        }
-
-        var verb = await _context.Verbs.FindAsync(id);
-
-        if(verb is null)
-        {
-            return NotFound();
-        }
-
-        _mapper.Map(verbDTO, verb);
-
         try
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await VerbExistsAsync(id))
+            if (id != verbDTO.Id)
+            {
+                return BadRequest();
+            }
+
+            if (!await _context.Decks.AnyAsync(d => d.Id == verbDTO.DeckId))
+            {
+                return NotFound("NotFound Deck");
+            }
+
+            var verb = await _context.Verbs.FindAsync(id);
+
+            if(verb is null)
             {
                 return NotFound();
             }
-            else
-            {
-                throw;
-            }
-        }
 
-        return NoContent();
+            _mapper.Map(verbDTO, verb);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (System.Exception ex)
+        {
+            return await ExceptionHandler.HandleExceptionAsync(ex, async () => await VerbExistsAsync(id));
+        }    
     }
 
     [HttpPatch("{id}")]
     public async Task<IActionResult> PatchVerb(int id, [FromBody] JsonPatchDocument<VerbDTO> patchDoc)
     {
-        if (patchDoc == null)
+        try
         {
-            return BadRequest();
-        }
+            if (patchDoc == null)
+            {
+                return BadRequest();
+            }
 
-        var verb = await _context.Verbs.FindAsync(id);
-        if (verb == null)
+            var verb = await _context.Verbs.FindAsync(id);
+            if (verb == null)
+            {
+                return NotFound();
+            }
+
+            var verbDto = _mapper.Map<VerbDTO>(verb);
+            patchDoc.ApplyTo(verbDto, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            _mapper.Map(verbDto, verb);
+            await _context.SaveChangesAsync();
+
+            return Ok(_mapper.Map<VerbDTO>(verb));
+        }
+        catch (System.Exception ex)
         {
-            return NotFound();
+            return await ExceptionHandler.HandleExceptionAsync(ex);
         }
-
-        var verbDto = _mapper.Map<VerbDTO>(verb);
-        patchDoc.ApplyTo(verbDto, ModelState);
-
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        _mapper.Map(verbDto, verb);
-        await _context.SaveChangesAsync();
-
-        return Ok(_mapper.Map<VerbDTO>(verb));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVerb(int id)
     {
-        var verb = await _context.Verbs.FindAsync(id);
-        if (verb == null)
+        try
         {
-            return NotFound();
+            var verb = await _context.Verbs.FindAsync(id);
+            if (verb == null)
+            {
+                return NotFound();
+            }
+
+            _context.Verbs.Remove(verb);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
-
-        _context.Verbs.Remove(verb);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+        catch (System.Exception ex)
+        {
+            return await ExceptionHandler.HandleExceptionAsync(ex);
+        }
     }
 
     private async Task<bool> VerbExistsAsync(int id)
